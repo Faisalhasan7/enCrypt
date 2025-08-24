@@ -19,7 +19,6 @@
     -   **Caesar Cipher**: A simple substitution cipher where each letter is shifted a certain number of places down the alphabet.
     -   **Vigenère Cipher**: A more robust polyalphabetic substitution cipher that uses a keyword to encrypt the message.
     -   **Autokey Cipher**: A variation of the Vigenère cipher where the key is extended by the message's own plaintext.
--   **Responsive Design**: The user interface is designed to work seamlessly on both desktop and mobile devices.
 
 ---
 
