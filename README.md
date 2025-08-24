@@ -1,4 +1,4 @@
-[![Live Site](https://img.shields.io/badge/Live_Site-4c1)]([https://your-website-url.com](https://faisalhasan7.github.io/enCrypt/))
+[![Live Site](https://img.shields.io/badge/Live_Site-4c1)](https://faisalhasan7.github.io/enCrypt/)
 # enCrypt
 
 **enCrypt** is a web-based utility that allows you to securely hide secret messages within PNG images using steganography. It provides an extra layer of security by encrypting your message with one of three different classical cipher methods before embedding it into the image data. You can then share the image, and the intended recipient can use enCrypt to extract and decrypt the hidden message.
