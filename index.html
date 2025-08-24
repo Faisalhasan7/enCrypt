@@ -1,0 +1,520 @@
+
+<!DOCTYPE html>
+<html lang="en" class="h-full antialiased">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>enCipher — Message Encoder</title>
+    <!-- Tailwind (v4 browser build) -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <meta name="color-scheme" content="light" />
+</head>
+
+<body class="min-h-full bg-zinc-50 text-zinc-800">
+    <header class="sticky top-0 z-10 border-b border-zinc-200/60 bg-white/80 backdrop-blur-sm">
+        <div class="mx-auto max-w-4xl px-4 py-4">
+            <div class="flex items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <div
+                        class="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 text-white shadow-sm">
+                        e</div>
+                    <div>
+                        <h1 class="text-xl font-semibold tracking-tight">enCrypt — Message Encoder</h1>
+                        <p class="text-sm text-zinc-500">Hide a secret message inside a PNG image.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="mx-auto max-w-4xl px-4 pb-24 pt-8">
+        <!-- Tabs -->
+        <div class="rounded-2xl border border-zinc-200 bg-white p-2 shadow-sm">
+            <div class="flex gap-2 rounded-xl bg-zinc-100 p-1">
+                <button id="tab-embed" type="button"
+                    class="tab-btn inline-flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-zinc-700 transition data-[active=true]:bg-white data-[active=true]:text-zinc-900 data-[active=true]:shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="size-4" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 20h9" />
+                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
+                    Embed
+                </button>
+                <button id="tab-extract" type="button"
+                    class="tab-btn inline-flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-zinc-700 transition data-[active=true]:bg-white data-[active=true]:text-zinc-900 data-[active=true]:shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="size-4" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 20h9" />
+                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
+                    Extract
+                </button>
+            </div>
+
+            <!-- Panel: Embed -->
+            <section id="panel-embed" class="space-y-6 p-4">
+                <h2 class="text-lg font-semibold">Embed a message</h2>
+
+                <div class="grid gap-6 md:grid-cols-2">
+                    <!-- Image picker -->
+                    <div class="space-y-3">
+                        <label for="file-embed" class="block text-sm font-medium">Select a PNG image</label>
+                        <label
+                            class="group grid cursor-pointer place-items-center gap-3 rounded-xl border border-dashed border-zinc-300 p-6 text-center transition hover:border-zinc-400"
+                            tabindex="0">
+                            <input id="file-embed" type="file" accept="image/png" class="sr-only" />
+                            <div class="text-sm text-zinc-500">Click to choose a PNG</div>
+                            <div id="status-embed" class="text-xs text-zinc-500">No image selected.</div>
+                            <img id="preview-embed" alt="Preview"
+                                class="hidden w-full rounded-lg border border-zinc-200" />
+                        </label>
+                    </div>
+
+                    <!-- Message + method -->
+                    <div class="space-y-4">
+                        <div>
+                            <label for="message" class="mb-1 block text-sm font-medium">Your secret message</label>
+                            <textarea id="message" placeholder="Type your secret here"
+                                class="block w-full resize-y rounded-xl border border-zinc-300 bg-white/70 px-3 py-2 text-sm outline-none ring-0 transition placeholder:text-zinc-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                                rows="6"></textarea>
+                            <div id="counter" class="mt-1 text-xs text-zinc-500">Length: 0 | Capacity: 0</div>
+                        </div>
+
+                        <fieldset class="space-y-3">
+                            <legend class="text-sm font-medium">Encryption type</legend>
+                            <div class="flex flex-wrap gap-3">
+                                <label class="inline-flex items-center gap-2 text-sm">
+                                    <input type="radio" name="method" value="caesar" checked
+                                        class="size-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500" />
+                                    Caesar
+                                </label>
+                                <label class="inline-flex items-center gap-2 text-sm">
+                                    <input type="radio" name="method" value="vigenere"
+                                        class="size-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500" />
+                                    Vigenère
+                                </label>
+                                <label class="inline-flex items-center gap-2 text-sm">
+                                    <input type="radio" name="method" value="autokey"
+                                        class="size-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500" />
+                                    Autokey
+                                </label>
+                            </div>
+                        </fieldset>
+
+                        <div id="group-shift" class="space-y-1">
+                            <label for="shift" class="block text-sm font-medium">Shift (1–25)</label>
+                            <input id="shift" type="number" min="1" max="25" value="3"
+                                class="block w-40 rounded-xl border border-zinc-300 bg-white/70 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200" />
+                        </div>
+
+                        <div id="group-key-vig" class="hidden space-y-1">
+                            <label for="key-vig" class="block text-sm font-medium">Keyword (letters only)</label>
+                            <input id="key-vig" type="text"
+                                class="block w-full rounded-xl border border-zinc-300 bg-white/70 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200" />
+                        </div>
+
+                        <div id="group-key-auto" class="hidden space-y-1">
+                            <label for="key-auto" class="block text-sm font-medium">Keyword (letters only)</label>
+                            <input id="key-auto" type="text"
+                                class="block w-full rounded-xl border border-zinc-300 bg-white/70 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200" />
+                        </div>
+
+                        <button id="btn-embed"
+                            class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-400 disabled:cursor-not-allowed disabled:opacity-60">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="size-4" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                <polyline points="7 10 12 15 17 10" />
+                                <line x1="12" x2="12" y1="15" y2="3" /></svg>
+                            Embed & Download
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Panel: Extract -->
+            <section id="panel-extract" class="hidden space-y-6 p-4">
+                <h2 class="text-lg font-semibold">Extract a message</h2>
+                <div class="grid gap-6 md:grid-cols-2">
+                    <div class="space-y-3">
+                        <label for="file-extract" class="block text-sm font-medium">Select a PNG image</label>
+                        <label
+                            class="group grid cursor-pointer place-items-center gap-3 rounded-xl border border-dashed border-zinc-300 p-6 text-center transition hover:border-zinc-400"
+                            tabindex="0">
+                            <input id="file-extract" type="file" accept="image/png" class="sr-only" />
+                            <div class="text-sm text-zinc-500">Click to choose a PNG</div>
+                            <div id="status-extract" class="text-xs text-zinc-500">No image selected.</div>
+                            <img id="preview-extract" alt="Preview"
+                                class="hidden w-full rounded-lg border border-zinc-200" />
+                        </label>
+                    </div>
+
+                    <div class="space-y-4">
+                        <fieldset class="space-y-3">
+                            <legend class="text-sm font-medium">Decryption type</legend>
+                            <div class="flex flex-wrap gap-3">
+                                <label class="inline-flex items-center gap-2 text-sm">
+                                    <input type="radio" name="method-ex" value="caesar" checked
+                                        class="size-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500" />
+                                    Caesar
+                                </label>
+                                <label class="inline-flex items-center gap-2 text-sm">
+                                    <input type="radio" name="method-ex" value="vigenere"
+                                        class="size-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500" />
+                                    Vigenère
+                                </label>
+                                <label class="inline-flex items-center gap-2 text-sm">
+                                    <input type="radio" name="method-ex" value="autokey"
+                                        class="size-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500" />
+                                    Autokey
+                                </label>
+                            </div>
+                        </fieldset>
+
+                        <div id="group-shift-ex" class="space-y-1">
+                            <label for="shift-ex" class="block text-sm font-medium">Shift (1–25)</label>
+                            <input id="shift-ex" type="number" min="1" max="25" value="3"
+                                class="block w-40 rounded-xl border border-zinc-300 bg-white/70 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200" />
+                        </div>
+
+                        <div id="group-key-vig-ex" class="hidden space-y-1">
+                            <label for="key-vig-ex" class="block text-sm font-medium">Keyword</label>
+                            <input id="key-vig-ex" type="text"
+                                class="block w-full rounded-xl border border-zinc-300 bg-white/70 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200" />
+                        </div>
+
+                        <div id="group-key-auto-ex" class="hidden space-y-1">
+                            <label for="key-auto-ex" class="block text-sm font-medium">Keyword</label>
+                            <input id="key-auto-ex" type="text"
+                                class="block w-full rounded-xl border border-zinc-300 bg-white/70 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200" />
+                        </div>
+
+                        <button id="btn-extract"
+                            class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-400 disabled:cursor-not-allowed disabled:opacity-60">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="size-4" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="16 18 22 12 16 6" />
+                                <polyline points="8 6 2 12 8 18" /></svg>
+                            Extract Message
+                        </button>
+
+                        <div>
+                            <label for="output" class="mb-1 block text-sm font-medium">Extracted message</label>
+                            <textarea id="output" readonly
+                                class="block w-full resize-y rounded-xl border border-zinc-300 bg-white/70 px-3 py-2 text-sm outline-none ring-0 transition placeholder:text-zinc-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+                                rows="6"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Script: unchanged crypto + steg logic, updated for Tailwind-driven UI state -->
+    <script>
+        // Tab switching (Tailwind uses data-[active=true] style selectors above)
+        const tabEmbed = document.getElementById('tab-embed');
+        const tabExtract = document.getElementById('tab-extract');
+        const panelEmbed = document.getElementById('panel-embed');
+        const panelExtract = document.getElementById('panel-extract');
+
+        function setTab(active) {
+            const isEmbed = active === 'embed';
+            tabEmbed.dataset.active = isEmbed;
+            tabExtract.dataset.active = !isEmbed;
+            panelEmbed.classList.toggle('hidden', !isEmbed);
+            panelExtract.classList.toggle('hidden', isEmbed);
+        }
+
+        tabEmbed.addEventListener('click', () => setTab('embed'));
+        tabExtract.addEventListener('click', () => setTab('extract'));
+        setTab('embed');
+
+        // UI elements
+        const fileEmbed = document.getElementById('file-embed');
+        const previewEmbed = document.getElementById('preview-embed');
+        const statusEmbed = document.getElementById('status-embed');
+        const messageEl = document.getElementById('message');
+        const counter = document.getElementById('counter');
+        const btnEmbed = document.getElementById('btn-embed');
+        const shiftEl = document.getElementById('shift');
+        const keyVig = document.getElementById('key-vig');
+        const keyAuto = document.getElementById('key-auto');
+
+        const fileExtract = document.getElementById('file-extract');
+        const previewExtract = document.getElementById('preview-extract');
+        const statusExtract = document.getElementById('status-extract');
+        const btnExtract = document.getElementById('btn-extract');
+        const outputEl = document.getElementById('output');
+        const shiftEx = document.getElementById('shift-ex');
+        const keyVigEx = document.getElementById('key-vig-ex');
+        const keyAutoEx = document.getElementById('key-auto-ex');
+
+        // Encryption method toggles
+        document.querySelectorAll('input[name="method"]').forEach((radio) => {
+            radio.addEventListener('change', function () {
+                const method = this.value;
+                document.getElementById('group-shift').classList.toggle('hidden', method !== 'caesar');
+                document.getElementById('group-key-vig').classList.toggle('hidden', method !==
+                    'vigenere');
+                document.getElementById('group-key-auto').classList.toggle('hidden', method !==
+                    'autokey');
+            });
+        });
+
+        document.querySelectorAll('input[name="method-ex"]').forEach((radio) => {
+            radio.addEventListener('change', function () {
+                const method = this.value;
+                document.getElementById('group-shift-ex').classList.toggle('hidden', method !==
+                    'caesar');
+                document.getElementById('group-key-vig-ex').classList.toggle('hidden', method !==
+                    'vigenere');
+                document.getElementById('group-key-auto-ex').classList.toggle('hidden', method !==
+                    'autokey');
+            });
+        });
+
+        // --- Core Logic ---
+        function caesar(txt, shift) {
+            return txt.replace(/[a-zA-Z]/g, function (ch) {
+                const code = ch.charCodeAt(0);
+                const base = code >= 97 ? 97 : 65;
+                return String.fromCharCode(((code - base + shift) % 26) + base);
+            });
+        }
+
+        function decCaesar(txt, shift) {
+            return caesar(txt, 26 - shift);
+        }
+
+        function vig(txt, key) {
+            let res = '',
+                keyIndex = 0;
+            for (let i = 0; i < txt.length; i++) {
+                const ch = txt[i];
+                if (/[a-zA-Z]/.test(ch)) {
+                    const base = ch >= 'a' ? 97 : 65;
+                    const shift = key.toLowerCase().charCodeAt(keyIndex % key.length) - 97;
+                    res += String.fromCharCode(((ch.charCodeAt(0) - base + shift) % 26) + base);
+                    keyIndex++;
+                } else res += ch;
+            }
+            return res;
+        }
+
+        function invVig(txt, key) {
+            let res = '',
+                keyIndex = 0;
+            for (let i = 0; i < txt.length; i++) {
+                const ch = txt[i];
+                if (/[a-zA-Z]/.test(ch)) {
+                    const base = ch >= 'a' ? 97 : 65;
+                    const shift = key.toLowerCase().charCodeAt(keyIndex % key.length) - 97;
+                    res += String.fromCharCode(((ch.charCodeAt(0) - base - shift + 26) % 26) + base);
+                    keyIndex++;
+                } else res += ch;
+            }
+            return res;
+        }
+
+        function autokey(txt, key) {
+            let res = '';
+            const fullKey = key.toLowerCase() + txt.toLowerCase();
+            let keyIndex = 0;
+            for (let i = 0; i < txt.length; i++) {
+                const ch = txt[i];
+                if (/[a-zA-Z]/.test(ch)) {
+                    const base = ch >= 'a' ? 97 : 65;
+                    const shift = fullKey.charCodeAt(keyIndex) - 97;
+                    res += String.fromCharCode(((ch.charCodeAt(0) - base + shift) % 26) + base);
+                    keyIndex++;
+                } else res += ch;
+            }
+            return res;
+        }
+
+        function invAutokey(txt, key) {
+            let res = '',
+                currentKey = key.toLowerCase(),
+                keyIndex = 0;
+            for (let i = 0; i < txt.length; i++) {
+                const ch = txt[i];
+                if (/[a-zA-Z]/.test(ch)) {
+                    const base = ch >= 'a' ? 97 : 65;
+                    const shift = currentKey.charCodeAt(keyIndex) - 97;
+                    const decCh = String.fromCharCode(((ch.charCodeAt(0) - base - shift + 26) % 26) + base);
+                    res += decCh;
+                    currentKey += decCh.toLowerCase();
+                    keyIndex++;
+                } else res += ch;
+            }
+            return res;
+        }
+
+        function textToBin(text) {
+            return text.split('').map((char) => char.charCodeAt(0).toString(2).padStart(8, '0')).join('');
+        }
+
+        function binToText(bin) {
+            return bin.match(/.{1,8}/g).map((byte) => String.fromCharCode(parseInt(byte, 2))).join('');
+        }
+
+        let imgEmbed, capEmbed = 0;
+
+        fileEmbed.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file || file.type !== 'image/png') {
+                statusEmbed.textContent = 'Error: Please select a PNG file.';
+                statusEmbed.classList.remove('text-zinc-500');
+                statusEmbed.classList.add('text-red-600');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = function () {
+                    imgEmbed = img;
+                    capEmbed = Math.floor((img.width * img.height * 3) / 8);
+                    previewEmbed.src = event.target.result;
+                    previewEmbed.classList.remove('hidden');
+                    statusEmbed.textContent = 'Image loaded. Capacity: ' + capEmbed + ' characters.';
+                    statusEmbed.classList.remove('text-red-600');
+                    statusEmbed.classList.add('text-emerald-600');
+                    updateCounts();
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        function updateCounts() {
+            const len = messageEl.value.length;
+            counter.textContent = 'Length: ' + len + ' | Capacity: ' + capEmbed;
+        }
+        messageEl.addEventListener('input', updateCounts);
+
+        // Embed Action
+        btnEmbed.addEventListener('click', function () {
+            if (!imgEmbed) {
+                alert('Please select an image first.');
+                return;
+            }
+            const msg = messageEl.value;
+            if (!msg) {
+                alert('Please enter a message.');
+                return;
+            }
+
+            const method = document.querySelector('input[name="method"]:checked').value;
+            let encMsg = '';
+            try {
+                if (method === 'caesar') encMsg = caesar(msg, parseInt(shiftEl.value));
+                else if (method === 'vigenere') encMsg = vig(msg, keyVig.value);
+                else if (method === 'autokey') encMsg = autokey(msg, keyAuto.value);
+            } catch (e) {
+                alert('Invalid key for the selected encryption method.');
+                return;
+            }
+
+            if (encMsg.length > capEmbed) {
+                alert('Message is too long for this image.');
+                return;
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = imgEmbed.width;
+            canvas.height = imgEmbed.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(imgEmbed, 0, 0);
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+
+            const bin = textToBin(encMsg);
+            const lenBin = (bin.length).toString(2).padStart(32, '0');
+            const fullBin = lenBin + bin;
+
+            let dataIndex = 0;
+            for (let i = 0; i < fullBin.length; i++) {
+                data[dataIndex] = (data[dataIndex] & 0xFE) | parseInt(fullBin[i]);
+                dataIndex += (dataIndex + 1) % 4 === 0 ? 2 : 1;
+            }
+
+            ctx.putImageData(imageData, 0, 0);
+            const a = document.createElement('a');
+            a.href = canvas.toDataURL('image/png');
+            a.download = 'stego_image.png';
+            a.click();
+            statusEmbed.textContent = 'Success! Image downloaded.';
+            statusEmbed.classList.remove('text-red-600');
+            statusEmbed.classList.add('text-emerald-600');
+        });
+
+        // Extract Action
+        let imgExtractData;
+        fileExtract.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file || file.type !== 'image/png') {
+                statusExtract.textContent = 'Error: Please select a PNG file.';
+                statusExtract.classList.remove('text-zinc-500');
+                statusExtract.classList.add('text-red-600');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = function () {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+                    imgExtractData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    previewExtract.src = event.target.result;
+                    previewExtract.classList.remove('hidden');
+                    statusExtract.textContent = 'Image loaded.';
+                    statusExtract.classList.remove('text-red-600');
+                    statusExtract.classList.add('text-emerald-600');
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        btnExtract.addEventListener('click', function () {
+            if (!imgExtractData) {
+                alert('Please select an image to extract from.');
+                return;
+            }
+            const data = imgExtractData.data;
+            let lenBin = '',
+                dataIndex = 0;
+            for (let i = 0; i < 32; i++) {
+                lenBin += data[dataIndex] & 1;
+                dataIndex += (dataIndex + 1) % 4 === 0 ? 2 : 1;
+            }
+            const msgLen = parseInt(lenBin, 2);
+            let msgBin = '';
+            for (let i = 0; i < msgLen; i++) {
+                msgBin += data[dataIndex] & 1;
+                dataIndex += (dataIndex + 1) % 4 === 0 ? 2 : 1;
+            }
+            const encMsg = binToText(msgBin);
+            let decMsg = '';
+            const method = document.querySelector('input[name="method-ex"]:checked').value;
+            try {
+                if (method === 'caesar') decMsg = decCaesar(encMsg, parseInt(shiftEx.value));
+                else if (method === 'vigenere') decMsg = invVig(encMsg, keyVigEx.value);
+                else if (method === 'autokey') decMsg = invAutokey(encMsg, keyAutoEx.value);
+            } catch (e) {
+                alert('Invalid key for decryption. Could not extract message.');
+                return;
+            }
+            outputEl.value = decMsg;
+            statusExtract.textContent = 'Message extracted!';
+            statusExtract.classList.remove('text-red-600');
+            statusExtract.classList.add('text-emerald-600');
+        });
+    </script>
+
+</body>
+
+</html>
