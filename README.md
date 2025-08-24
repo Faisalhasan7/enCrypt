@@ -4,7 +4,6 @@
 **enCrypt** is a web-based utility that allows you to securely hide secret messages within PNG images using steganography. It provides an extra layer of security by encrypting your message with one of three different classical cipher methods before embedding it into the image data. You can then share the image, and the intended recipient can use enCrypt to extract and decrypt the hidden message.
 
 ![Screenshot of the enCrypt application interface](project.png) 
-*Note: You would replace 'placeholder_for_image.png' with an actual screenshot of your application.*
 
 ---
 
