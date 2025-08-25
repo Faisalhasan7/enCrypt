@@ -6,7 +6,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>enCrypt - Message Encoder</title>
-    <!-- Tailwind (v4 browser build) -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <meta name="color-scheme" content="light" />
 </head>
@@ -209,7 +208,6 @@
         </div>
     </main>
 
-    <!-- Script: unchanged crypto + steg logic, updated for Tailwind-driven UI state -->
     <script>
         // Tab switching (Tailwind uses data-[active=true] style selectors above)
         const tabEmbed = document.getElementById('tab-embed');
@@ -274,6 +272,9 @@
         });
 
         // --- Core Logic ---
+
+        
+        // --- Caesar ---
         function caesar(txt, shift) {
             return txt.replace(/[a-zA-Z]/g, function (ch) {
                 const code = ch.charCodeAt(0);
@@ -286,6 +287,9 @@
             return caesar(txt, 26 - shift);
         }
 
+        
+
+        // --- Vigenère ---
         function vig(txt, key) {
             let res = '',
                 keyIndex = 0;
@@ -316,6 +320,9 @@
             return res;
         }
 
+
+        
+        // --- Autokey ---
         function autokey(txt, key) {
             let res = '';
             const fullKey = key.toLowerCase() + txt.toLowerCase();
