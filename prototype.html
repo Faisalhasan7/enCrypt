@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>enCipher</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            color: #333;
+        }
+
+        .container {
+            width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border: 1px solid #ccc;
+        }
+
+        h1 {
+            color: #0000ff;
+            text-align: center;
+        }
+
+        .tabs button {
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #eee;
+            cursor: pointer;
+            color: #333;
+
+        }
+
+        .tabs button.active {
+            background-color: #474646;
+            color: #fff;
+
+        }
+        
+        .panel {
+            border: 1px solid #ccc;
+            padding: 20px;
+            margin-top: 10px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        textarea {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        button {
+            padding: 10px 15px;
+            background-color: #0000ff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .status {
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+        }
+
+        .status.ok {
+            background-color: #e0ffe0;
+        }
+
+        .status.err {
+            background-color: #ffe0e0;
+            color: red;
+        }
+
+        img.preview {
+            max-width: 100%;
+            margin-top: 10px;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>enCrypt -  Message Encoder</h1>
+        <p>Hide a secret message in a PNG file.</p>
+
+        <div class="tabs">
+            <button id="tab-embed" class="active">Embed</button>
+            <button id="tab-extract">Extract</button>
+        </div>
+
+        <div id="panel-embed" class="panel">
+            <h2>Embed a Message</h2>
+            <div class="form-group">
+                <label for="file-embed">Select a PNG Image:</label>
+                <input id="file-embed" type="file" accept="image/png" />
+                <img id="preview-embed" class="preview hidden" alt="Preview" />
+                <div id="status-embed" class="status">No image selected.</div>
+            </div>
+            <div class="form-group">
+                <label for="message">Your Secret Message:</label>
+                <textarea id="message" placeholder="Type your secret here"></textarea>
+                <div id="counter">Length: 0 | Capacity: 0</div>
+            </div>
+            <div class="form-group">
+                <label>Encryption Type:</label>
+                <input type="radio" name="method" value="caesar" checked> Caesar
+                <input type="radio" name="method" value="mono"> Monoalphabetic
+                <input type="radio" name="method" value="vigenere"> Vigenère
+            </div>
+            <div id="group-shift" class="form-group">
+                <label for="shift">Shift (1-25):</label>
+                <input id="shift" type="number" min="1" max="25" value="3" />
+            </div>
+            <div id="group-key-mono" class="form-group hidden">
+                <label for="key-mono">Substitution Key (26 unique letters):</label>
+                <input id="key-mono" type="text" />
+                <button id="btn-gen">Generate Random Key</button>
+            </div>
+            <div id="group-key-vig" class="form-group hidden">
+                <label for="key-vig">Keyword (letters only):</label>
+                <input id="key-vig" type="text" />
+            </div>
+            <button id="btn-embed">Embed & Download Image</button>
+        </div>
+
+        <div id="panel-extract" class="panel hidden">
+            <h2>Extract a Message</h2>
+            <div class="form-group">
+                <label for="file-extract">Select a PNG Image:</label>
+                <input id="file-extract" type="file" accept="image/png" />
+                <img id="preview-extract" class="preview hidden" alt="Preview" />
+                <div id="status-extract" class="status">No image selected.</div>
+            </div>
+            <div class="form-group">
+                <label>Decryption Type:</label>
+                <input type="radio" name="method-ex" value="caesar" checked> Caesar
+                <input type="radio" name="method-ex" value="mono"> Monoalphabetic
+                <input type="radio" name="method-ex" value="vigenere"> Vigenère
+            </div>
+            <div id="group-shift-ex" class="form-group">
+                <label for="shift-ex">Shift (1-25):</label>
+                <input id="shift-ex" type="number" min="1" max="25" value="3" />
+            </div>
+            <div id="group-key-mono-ex" class="form-group hidden">
+                <label for="key-mono-ex">Substitution Key:</label>
+                <input id="key-mono-ex" type="text" />
+            </div>
+            <div id="group-key-vig-ex" class="form-group hidden">
+                <label for="key-vig-ex">Keyword:</label>
+                <input id="key-vig-ex" type="text" />
+            </div>
+            <button id="btn-extract">Extract Message</button>
+            <div class="form-group">
+                <label for="output">Extracted Message:</label>
+                <textarea id="output" readonly></textarea>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching
+        var tabEmbed = document.getElementById('tab-embed');
+        var tabExtract = document.getElementById('tab-extract');
+        var panelEmbed = document.getElementById('panel-embed');
+        var panelExtract = document.getElementById('panel-extract');
+
+        tabEmbed.addEventListener('click', function() {
+            tabEmbed.classList.add('active');
+            tabExtract.classList.remove('active');
+            panelEmbed.classList.remove('hidden');
+            panelExtract.classList.add('hidden');
+        });
+
+        tabExtract.addEventListener('click', function() {
+            tabExtract.classList.add('active');
+            tabEmbed.classList.remove('active');
+            panelExtract.classList.remove('hidden');
+            panelEmbed.classList.add('hidden');
+        });
+
+        // UI elements
+        var fileEmbed = document.getElementById('file-embed');
+        var previewEmbed = document.getElementById('preview-embed');
+        var statusEmbed = document.getElementById('status-embed');
+        var messageEl = document.getElementById('message');
+        var counter = document.getElementById('counter');
+        var btnEmbed = document.getElementById('btn-embed');
+        var shiftEl = document.getElementById('shift');
+        var keyMono = document.getElementById('key-mono');
+        var keyVig = document.getElementById('key-vig');
+        var btnGen = document.getElementById('btn-gen');
+
+        var fileExtract = document.getElementById('file-extract');
+        var previewExtract = document.getElementById('preview-extract');
+        var statusExtract = document.getElementById('status-extract');
+        var btnExtract = document.getElementById('btn-extract');
+        var outputEl = document.getElementById('output');
+        var shiftEx = document.getElementById('shift-ex');
+        var keyMonoEx = document.getElementById('key-mono-ex');
+        var keyVigEx = document.getElementById('key-vig-ex');
+
+        // Encryption method toggles
+        document.querySelectorAll('input[name="method"]').forEach(function(radio) {
+            radio.addEventListener('change', function() {
+                var method = this.value;
+                document.getElementById('group-shift').classList.toggle('hidden', method !== 'caesar');
+                document.getElementById('group-key-mono').classList.toggle('hidden', method !== 'mono');
+                document.getElementById('group-key-vig').classList.toggle('hidden', method !== 'vigenere');
+            });
+        });
+
+        document.querySelectorAll('input[name="method-ex"]').forEach(function(radio) {
+            radio.addEventListener('change', function() {
+                var method = this.value;
+                document.getElementById('group-shift-ex').classList.toggle('hidden', method !== 'caesar');
+                document.getElementById('group-key-mono-ex').classList.toggle('hidden', method !== 'mono');
+                document.getElementById('group-key-vig-ex').classList.toggle('hidden', method !== 'vigenere');
+            });
+        });
+
+        // --- Core Logic ---
+
+        // Caesar Cipher
+        function caesar(txt, shift) {
+            return txt.replace(/[a-zA-Z]/g, function(ch) {
+                var code = ch.charCodeAt(0);
+                var base = code >= 97 ? 97 : 65;
+                return String.fromCharCode(((code - base + shift) % 26) + base);
+            });
+        }
+
+        function decCaesar(txt, shift) {
+            return caesar(txt, 26 - shift);
+        }
+
+        // Monoalphabetic Cipher
+        function genSubKey() {
+            var a = 'abcdefghijklmnopqrstuvwxyz'.split('');
+            for (var i = a.length - 1; i > 0; i--) {
+                var j = Math.floor(Math.random() * (i + 1));
+                var tmp = a[i];
+                a[i] = a[j];
+                a[j] = tmp;
+            }
+            return a.join('');
+        }
+
+        function mono(txt, key) {
+            var map = {};
+            for (var i = 0; i < 26; i++) {
+                map['abcdefghijklmnopqrstuvwxyz' [i]] = key[i];
+            }
+            return txt.replace(/[a-zA-Z]/g, function(ch) {
+                var lower = ch.toLowerCase();
+                var isUpper = ch !== lower;
+                var res = map[lower] || ch;
+                return isUpper ? res.toUpperCase() : res;
+            });
+        }
+
+        function invMono(txt, key) {
+            var invMap = {};
+            for (var i = 0; i < 26; i++) {
+                invMap[key[i]] = 'abcdefghijklmnopqrstuvwxyz' [i];
+            }
+            return txt.replace(/[a-zA-Z]/g, function(ch) {
+                var lower = ch.toLowerCase();
+                var isUpper = ch !== lower;
+                var res = invMap[lower] || ch;
+                return isUpper ? res.toUpperCase() : res;
+            });
+        }
+
+
+        // Vigenère Cipher
+        function vig(txt, key) {
+            var res = '';
+            var keyIndex = 0;
+            for (var i = 0; i < txt.length; i++) {
+                var ch = txt[i];
+                if (/[a-zA-Z]/.test(ch)) {
+                    var base = ch >= 'a' ? 97 : 65;
+                    var shift = key.toLowerCase().charCodeAt(keyIndex % key.length) - 97;
+                    res += String.fromCharCode(((ch.charCodeAt(0) - base + shift) % 26) + base);
+                    keyIndex++;
+                } else {
+                    res += ch;
+                }
+            }
+            return res;
+        }
+
+        function invVig(txt, key) {
+            var res = '';
+            var keyIndex = 0;
+            for (var i = 0; i < txt.length; i++) {
+                var ch = txt[i];
+                if (/[a-zA-Z]/.test(ch)) {
+                    var base = ch >= 'a' ? 97 : 65;
+                    var shift = key.toLowerCase().charCodeAt(keyIndex % key.length) - 97;
+                    res += String.fromCharCode(((ch.charCodeAt(0) - base - shift + 26) % 26) + base);
+                    keyIndex++;
+                } else {
+                    res += ch;
+                }
+            }
+            return res;
+        }
+
+        // Steganography functions
+        function textToBin(text) {
+            return text.split('').map(function(char) {
+                return char.charCodeAt(0).toString(2).padStart(8, '0');
+            }).join('');
+        }
+
+        function binToText(bin) {
+            return bin.match(/.{1,8}/g).map(function(byte) {
+                return String.fromCharCode(parseInt(byte, 2));
+            }).join('');
+        }
+
+        var imgEmbed, capEmbed = 0;
+
+        fileEmbed.addEventListener('change', function(e) {
+            var file = e.target.files[0];
+            if (!file || file.type !== 'image/png') {
+                statusEmbed.textContent = 'Error: Please select a PNG file.';
+                statusEmbed.className = 'status err';
+                return;
+            }
+            var reader = new FileReader();
+            reader.onload = function(event) {
+                var img = new Image();
+                img.onload = function() {
+                    imgEmbed = img;
+                    capEmbed = Math.floor((img.width * img.height * 3) / 8);
+                    previewEmbed.src = event.target.result;
+                    previewEmbed.classList.remove('hidden');
+                    statusEmbed.textContent = 'Image loaded. Capacity: ' + capEmbed + ' characters.';
+                    statusEmbed.className = 'status ok';
+                    updateCounts();
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        function updateCounts() {
+            var len = messageEl.value.length;
+            counter.textContent = 'Length: ' + len + ' | Capacity: ' + capEmbed;
+        }
+        messageEl.addEventListener('input', updateCounts);
+
+        btnGen.addEventListener('click', function() {
+            keyMono.value = genSubKey();
+        });
+
+        // Embed Action
+        btnEmbed.addEventListener('click', function() {
+            if (!imgEmbed) {
+                alert('Please select an image first.');
+                return;
+            }
+            var msg = messageEl.value;
+            if (!msg) {
+                alert('Please enter a message.');
+                return;
+            }
+
+            var method = document.querySelector('input[name="method"]:checked').value;
+            var encMsg = '';
+
+            try {
+                if (method === 'caesar') {
+                    encMsg = caesar(msg, parseInt(shiftEl.value));
+                } else if (method === 'mono') {
+                    if (keyMono.value.length !== 26) throw new Error();
+                    encMsg = mono(msg, keyMono.value);
+                } else if (method === 'vigenere') {
+                    encMsg = vig(msg, keyVig.value);
+                }
+            } catch (e) {
+                alert('Invalid key for the selected encryption method.');
+                return;
+            }
+
+
+            if (encMsg.length > capEmbed) {
+                alert('Message is too long for this image.');
+                return;
+            }
+
+            var canvas = document.createElement('canvas');
+            canvas.width = imgEmbed.width;
+            canvas.height = imgEmbed.height;
+            var ctx = canvas.getContext('2d');
+            ctx.drawImage(imgEmbed, 0, 0);
+            var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            var data = imageData.data;
+
+            var bin = textToBin(encMsg);
+            var lenBin = (bin.length).toString(2).padStart(32, '0');
+            var fullBin = lenBin + bin;
+
+            var dataIndex = 0;
+            for (var i = 0; i < fullBin.length; i++) {
+                data[dataIndex] = (data[dataIndex] & 0xFE) | parseInt(fullBin[i]);
+                dataIndex += (dataIndex + 1) % 4 === 0 ? 2 : 1;
+            }
+
+            ctx.putImageData(imageData, 0, 0);
+            var a = document.createElement('a');
+            a.href = canvas.toDataURL('image/png');
+            a.download = 'stego_image.png';
+            a.click();
+            statusEmbed.textContent = 'Success! Image downloaded.';
+            statusEmbed.className = 'status ok';
+        });
+
+        // Extract Action
+        var imgExtractData;
+        fileExtract.addEventListener('change', function(e) {
+            var file = e.target.files[0];
+            if (!file || file.type !== 'image/png') {
+                statusExtract.textContent = 'Error: Please select a PNG file.';
+                statusExtract.className = 'status err';
+                return;
+            }
+            var reader = new FileReader();
+            reader.onload = function(event) {
+                var img = new Image();
+                img.onload = function() {
+                    var canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    var ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+                    imgExtractData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    previewExtract.src = event.target.result;
+                    previewExtract.classList.remove('hidden');
+                    statusExtract.textContent = 'Image loaded.';
+                    statusExtract.className = 'status ok';
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        btnExtract.addEventListener('click', function() {
+            if (!imgExtractData) {
+                alert('Please select an image to extract from.');
+                return;
+            }
+            var data = imgExtractData.data;
+            var lenBin = '';
+            var dataIndex = 0;
+
+            for (var i = 0; i < 32; i++) {
+                lenBin += data[dataIndex] & 1;
+                dataIndex += (dataIndex + 1) % 4 === 0 ? 2 : 1;
+            }
+
+            var msgLen = parseInt(lenBin, 2);
+            var msgBin = '';
+            for (var i = 0; i < msgLen; i++) {
+                msgBin += data[dataIndex] & 1;
+                dataIndex += (dataIndex + 1) % 4 === 0 ? 2 : 1;
+            }
+
+            var encMsg = binToText(msgBin);
+            var decMsg = '';
+
+            var method = document.querySelector('input[name="method-ex"]:checked').value;
+            try {
+                if (method === 'caesar') {
+                    decMsg = decCaesar(encMsg, parseInt(shiftEx.value));
+                } else if (method === 'mono') {
+                    if (keyMonoEx.value.length !== 26) throw new Error();
+                    decMsg = invMono(encMsg, keyMonoEx.value);
+                } else if (method === 'vigenere') {
+                    decMsg = invVig(encMsg, keyVigEx.value);
+                }
+            } catch (e) {
+                alert('Invalid key for decryption. Could not extract message.');
+                return;
+            }
+
+            outputEl.value = decMsg;
+            statusExtract.textContent = 'Message extracted!';
+            statusExtract.className = 'status ok';
+        });
+    </script>
+</body>
+
+</html>
